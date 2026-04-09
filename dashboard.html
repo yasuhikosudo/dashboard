@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ダッシュボード</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#fdf8f0;--bg2:#f5ede0;--bg3:#ede3d4;--bg4:#e4d8c8;
+  --border:rgba(0,0,0,0.08);--border2:rgba(0,0,0,0.14);
+  --text:#2c2416;--text2:#7a6a55;--text3:#a89880;
+  --accent:#2e6fcc;--accent-dim:rgba(46,111,204,0.12);
+  --green:#1a8c5a;--green-dim:rgba(26,140,90,0.12);
+  --red:#c0392b;--red-dim:rgba(192,57,43,0.10);
+  --amber:#b8720a;--amber-dim:rgba(184,114,10,0.12);
+  --purple:#6b46c1;--purple-dim:rgba(107,70,193,0.12);
+  --font:'Noto Sans JP',system-ui,sans-serif;--mono:'DM Mono',monospace;
+  --r:8px;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font);font-size:13px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.app{display:grid;grid-template-rows:80px 1fr;grid-template-columns:1fr 340px;height:100vh}
+.hdr{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;padding:0 24px;border-bottom:1px solid var(--border);background:var(--bg);z-index:20}
+.hdr-left{display:flex;align-items:center;gap:16px}
+.hdr-date-block{display:flex;flex-direction:column;gap:1px}
+.hdr-date-big{font-size:36px;font-weight:300;color:var(--text);line-height:1;letter-spacing:-.01em}
+.hdr-date-sub{font-size:12px;color:var(--text2);letter-spacing:.04em}
+.pulse{width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px rgba(46,111,204,0.5);animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.hdr-title{font-size:12px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text2)}
+.hdr-right{display:flex;align-items:center;gap:16px}
+.clock{font-family:var(--mono);font-size:12px;color:var(--text2)}
+.settings-btn{background:none;border:1px solid var(--border2);border-radius:var(--r);padding:4px 12px;color:var(--text2);font-size:11px;font-family:var(--font);cursor:pointer}
+.settings-btn:hover{background:var(--bg3);color:var(--text)}
+.ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:100;align-items:center;justify-content:center}
+.ov.open{display:flex}
+.ov-box{background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:24px;width:440px;max-width:92vw}
+.ov-box h2{font-size:15px;font-weight:500;margin-bottom:20px}
+.sr{margin-bottom:16px}
+.sr-lbl{font-size:11px;color:var(--text2);margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.sr-lbl a{color:var(--accent);font-size:10px;cursor:pointer}
+.sr-inp{width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:var(--r);padding:8px 12px;color:var(--text);font-size:12px;font-family:var(--mono);outline:none}
+.sr-inp:focus{border-color:var(--accent)}
+.sr-inp::placeholder{color:var(--text3)}
+.ov-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:20px}
+.btn-p{background:var(--accent);border:none;border-radius:var(--r);padding:8px 20px;color:#fff;font-size:12px;font-family:var(--font);cursor:pointer}
+.btn-s{background:none;border:1px solid var(--border2);border-radius:var(--r);padding:8px 16px;color:var(--text2);font-size:12px;font-family:var(--font);cursor:pointer}
+.btn-s:hover{background:var(--bg3)}
+.cal-panel{border-right:1px solid var(--border);overflow:hidden;display:flex;flex-direction:column}
+.cal-nav{display:flex;align-items:center;justify-content:space-between;padding:12px 18px 8px;border-bottom:1px solid var(--border);flex-shrink:0}
+.cal-nav-title{font-size:14px;font-weight:500}
+.cal-nav-sub{font-size:11px;color:var(--text2);margin-top:2px}
+.nav-btns{display:flex;gap:5px}
+.nav-btn{background:none;border:1px solid var(--border2);border-radius:6px;padding:4px 10px;color:var(--text2);font-size:11px;font-family:var(--font);cursor:pointer}
+.nav-btn:hover{background:var(--bg3);color:var(--text)}
+.wg{flex:1;overflow:auto;display:grid;grid-template-columns:44px repeat(7,1fr)}
+.wg::-webkit-scrollbar{width:3px;height:3px}
+.wg::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.wdh{position:sticky;top:0;z-index:10;grid-column:1/-1;display:grid;grid-template-columns:44px repeat(7,1fr);background:var(--bg);border-bottom:1px solid var(--border)}
+.wdh-e{border-right:1px solid var(--border)}
+.wdc{padding:7px 4px;text-align:center;font-size:10px;color:#5a4a35;border-right:1px solid var(--border)}
+.wdc.today{color:var(--accent)}
+.wdc-n{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:13px;font-weight:400;margin:0 auto}
+.wdc.today .wdc-n{background:var(--accent);color:#fff}
+.wdc-l{font-size:10px;margin-top:1px}
+.t-lbl{height:44px;display:flex;align-items:flex-start;justify-content:flex-end;padding:2px 6px 0 0;font-size:9px;font-family:var(--mono);color:#8a7a65}
+.dc{border-right:1px solid var(--border);position:relative}
+.dc.tc{background:rgba(46,111,204,0.06)}
+.hs{height:44px;border-bottom:1px solid var(--border)}
+.ev{position:absolute;left:2px;right:2px;border-radius:4px;padding:2px 5px;font-size:10px;line-height:1.3;overflow:hidden;cursor:default;border-left:2px solid}
+.ev-t{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ev-s{font-size:9px;opacity:.75}
+.ev-blue{background:#ddeeff;border-color:#2e6fcc;color:#1a4a99}
+.ev-green{background:#d4f0e0;border-color:#1a7a4a;color:#0f5530}
+.ev-amber{background:#fde8c0;border-color:#b8720a;color:#7a4a00}
+.ev-red{background:#fdd8d4;border-color:#c0392b;color:#8b1a10}
+.ev-purple{background:#ebe0ff;border-color:#6b46c1;color:#4a2d99}
+.nl{position:absolute;left:0;right:0;z-index:5;height:1px;background:var(--red);pointer-events:none}
+.nd{position:absolute;left:-3px;top:-3px;width:7px;height:7px;border-radius:50%;background:var(--red)}
+.sidebar{display:flex;flex-direction:column;overflow:hidden}
+.ph{display:flex;align-items:center;justify-content:space-between;padding:9px 16px 7px;border-bottom:1px solid var(--border);flex-shrink:0}
+.pt{font-size:11px;font-weight:500;color:#3a2e20;text-transform:uppercase;letter-spacing:.06em}
+.ps{font-size:10px;color:#7a6a55}
+.w-strip{display:flex;overflow-x:auto;padding:8px 10px 10px;gap:2px;flex-shrink:0}
+.w-strip::-webkit-scrollbar{height:3px}
+.w-strip::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.wd{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 7px;border-radius:var(--r);flex-shrink:0;min-width:40px}
+.wd.tw{background:var(--accent-dim);outline:1px solid rgba(46,111,204,0.3)}
+.wd-l{font-size:9px;color:#5a4a35}
+.wd-i{font-size:17px;line-height:1}
+.wd-h{font-size:12px;font-weight:500;color:#2c2416}
+.wd-lo{font-size:10px;color:#6a5a45}
+.wd-r{font-size:9px;color:#1a5aaa}
+.habit-sect{flex-shrink:0;border-bottom:1px solid var(--border)}
+.hl{padding:3px 0 6px}
+.hi{display:flex;align-items:center;gap:10px;padding:6px 16px;transition:background .1s}
+.hi:hover{background:var(--bg2)}
+.hck{width:17px;height:17px;border-radius:50%;border:1.5px solid var(--border2);flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.hck:hover{border-color:var(--green)}
+.hck.done{background:var(--green);border-color:var(--green)}
+.hck.done::after{content:'✓';font-size:9px;color:#000;font-weight:bold}
+.hck.skip{background:var(--bg4);border-color:var(--border2)}
+.hck.skip::after{content:'—';font-size:9px;color:var(--text3)}
+.hb{flex:1;min-width:0}
+.hn{font-size:12px;color:#2c2416;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hn.done{text-decoration:line-through;color:#b0a090}
+.hpr{height:3px;background:var(--bg4);border-radius:2px;margin-top:3px}
+.hpb{height:100%;border-radius:2px;background:var(--green);transition:width .3s}
+.empty{padding:14px 16px;text-align:center;color:var(--text3);font-size:11px}
+.todo-sect{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.fbar{display:flex;gap:4px;padding:6px 16px 5px;border-bottom:1px solid var(--border);flex-shrink:0}
+.fb{background:none;border:1px solid transparent;border-radius:20px;padding:2px 10px;font-size:11px;font-family:var(--font);color:var(--text2);cursor:pointer;transition:all .15s}
+.fb.active{background:var(--bg3);border-color:var(--border2);color:var(--text)}
+.fb:hover{background:var(--bg3);color:var(--text)}
+.tscroll{flex:1;overflow-y:auto;padding:3px 0}
+.tscroll::-webkit-scrollbar{width:3px}
+.tscroll::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.ti{display:flex;align-items:flex-start;gap:9px;padding:7px 16px;transition:background .1s}
+.ti:hover{background:var(--bg2)}
+.tc2{width:15px;height:15px;border-radius:50%;border:1.5px solid var(--border2);flex-shrink:0;margin-top:2px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.tc2:hover{border-color:var(--accent)}
+.tc2.done{background:var(--green);border-color:var(--green)}
+.tc2.done::after{content:'✓';font-size:8px;color:#000;font-weight:bold}
+.tb{flex:1;min-width:0}
+.tt{font-size:12px;color:#2c2416;word-break:break-word}
+.tt.done{text-decoration:line-through;color:#b0a090}
+.tm{display:flex;gap:7px;margin-top:2px;align-items:center}
+.td{font-size:10px;font-family:var(--mono);color:var(--text3)}
+.td.ov{color:var(--red)}.td.tw2{color:var(--amber)}
+.pd{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.p1{background:var(--red)}.p2{background:var(--amber)}.p3{background:var(--accent)}.p4{background:var(--text3)}
+.cnt{font-size:10px;background:var(--bg3);border-radius:20px;padding:2px 9px;color:var(--text2)}
+</style>
+</head>
+<body>
+<div class="app">
+
+<header class="hdr">
+  <div class="hdr-left">
+    <div class="pulse"></div>
+    <div class="hdr-date-block">
+      <div class="hdr-date-big" id="dateDisplay"></div>
+      <div class="hdr-date-sub" id="dateWeekYear"></div>
+    </div>
+  </div>
+  <div class="hdr-right">
+    <span class="clock" id="clock"></span>
+    <button class="settings-btn" onclick="openSettings()">⚙ 設定</button>
+  </div>
+</header>
+
+<div class="ov" id="ov">
+  <div class="ov-box">
+    <h2>API 接続設定</h2>
+    <div class="sr">
+      <div class="sr-lbl">Todoist API Token
+        <a onclick="window.open('https://app.todoist.com/app/settings/integrations/developer')">Settings → Integrations → Developer ↗</a>
+      </div>
+      <input class="sr-inp" id="s1" type="password" placeholder="APIトークンを貼り付け...">
+    </div>
+    <div class="sr">
+      <div class="sr-lbl">Habitify API Key
+        <a onclick="alert('Habitify アプリ → Settings → API Credential → Copy')">取得方法 ↗</a>
+      </div>
+      <input class="sr-inp" id="s2" type="password" placeholder="APIキーを貼り付け...">
+    </div>
+    <div class="sr">
+      <div class="sr-lbl">Googleカレンダー iCal URL ①（青）</div>
+      <input class="sr-inp" id="s4" type="text" placeholder="https://calendar.google.com/calendar/ical/...">
+    </div>
+    <div class="sr">
+      <div class="sr-lbl">Googleカレンダー iCal URL ②（緑）</div>
+      <input class="sr-inp" id="s5" type="text" placeholder="https://calendar.google.com/calendar/ical/...">
+    </div>
+    <div class="sr">
+      <div class="sr-lbl">Googleカレンダー iCal URL ③（橙）</div>
+      <input class="sr-inp" id="s6" type="text" placeholder="https://calendar.google.com/calendar/ical/...">
+    </div>
+    <div class="sr">
+      <div class="sr-lbl">天気の場所（緯度,経度） — デフォルト:高知市</div>
+      <input class="sr-inp" id="s3" type="text" placeholder="33.5597,133.5311">
+    </div>
+      <button class="btn-s" onclick="closeSettings()">キャンセル</button>
+      <button class="btn-p" onclick="saveSettings()">保存・再接続</button>
+    </div>
+  </div>
+</div>
+
+<section class="cal-panel">
+  <div class="cal-nav">
+    <div>
+      <div class="cal-nav-title" id="calR"></div>
+      <div class="cal-nav-sub" id="calS"></div>
+    </div>
+    <div class="nav-btns">
+      <button class="nav-btn" onclick="sw(-1)">← 前</button>
+      <button class="nav-btn" onclick="sw(0)">今週</button>
+      <button class="nav-btn" onclick="sw(1)">次 →</button>
+    </div>
+  </div>
+  <div class="wg" id="wg"></div>
+</section>
+
+<aside class="sidebar">
+
+  <div class="ph" style="border-bottom:1px solid var(--border)">
+    <span class="pt">週間天気</span>
+    <span class="ps" id="wloc">高知市</span>
+  </div>
+  <div class="w-strip" id="ws"></div>
+
+  <div class="habit-sect">
+    <div class="ph">
+      <span class="pt">習慣 — 今日</span>
+      <span class="ps" id="hst">—</span>
+    </div>
+    <div class="hl" id="hl"><div class="empty">設定からHabitify APIキーを入力</div></div>
+  </div>
+
+  <div class="todo-sect">
+    <div class="ph" style="border-bottom:1px solid var(--border)">
+      <span class="pt">タスク</span>
+      <span class="cnt" id="tc">0件</span>
+    </div>
+    <div class="fbar">
+      <button class="fb active" onclick="sf('all',this)">すべて</button>
+      <button class="fb" onclick="sf('today',this)">今日</button>
+      <button class="fb" onclick="sf('overdue',this)">期限切れ</button>
+    </div>
+    <div class="tscroll" id="ts"><div class="empty">設定からTodoist APIトークンを入力</div></div>
+  </div>
+
+</aside>
+</div>
+
+<script>
+// Config
+const C={
+  tok:localStorage.getItem('tdtok')||'',
+  hab:localStorage.getItem('hbtok')||'',
+  ll: localStorage.getItem('latlng')||'33.5597,133.5311'
+};
+function openSettings(){
+  document.getElementById('s1').value=C.tok;
+  document.getElementById('s2').value=C.hab;
+  document.getElementById('s3').value=C.ll;
+  document.getElementById('s4').value=localStorage.getItem('ical1')||'';
+  document.getElementById('s5').value=localStorage.getItem('ical2')||'';
+  document.getElementById('s6').value=localStorage.getItem('ical3')||'';
+  document.getElementById('ov').classList.add('open');
+}
+function closeSettings(){document.getElementById('ov').classList.remove('open')}
+function saveSettings(){
+  C.tok=document.getElementById('s1').value.trim();
+  C.hab=document.getElementById('s2').value.trim();
+  C.ll=document.getElementById('s3').value.trim()||'33.5597,133.5311';
+  localStorage.setItem('tdtok',C.tok);
+  localStorage.setItem('hbtok',C.hab);
+  localStorage.setItem('latlng',C.ll);
+  localStorage.setItem('ical1',document.getElementById('s4').value.trim());
+  localStorage.setItem('ical2',document.getElementById('s5').value.trim());
+  localStorage.setItem('ical3',document.getElementById('s6').value.trim());
+  closeSettings();
+  fetchCalendars();
+  initAll();
+}
+document.getElementById('ov').addEventListener('click',e=>{if(e.target===e.currentTarget)closeSettings()});
+
+// Clock
+function clk(){
+  const n=new Date();
+  const month=n.toLocaleDateString('ja-JP',{month:'long'});
+  const day=n.getDate();
+  const dow=['日','月','火','水','木','金','土'][n.getDay()];
+  const year=n.getFullYear();
+  document.getElementById('dateDisplay').textContent=month+' '+day+'日（'+dow+'）';
+  document.getElementById('dateWeekYear').textContent=year+'年';
+  document.getElementById('clock').textContent=
+    n.toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+clk();setInterval(clk,1000);
+
+// Calendar
+const DOW=['日','月','火','水','木','金','土'];
+const SH=7,EH=22,SLH=44;
+let wkO=0;
+let calEvents=[];
+
+// iCal URLs（設定画面から入力、localStorageに保存）
+function getIcalUrls(){
+  return[
+    {url:localStorage.getItem('ical1')||'',cls:'ev-blue'},
+    {url:localStorage.getItem('ical2')||'',cls:'ev-green'},
+    {url:localStorage.getItem('ical3')||'',cls:'ev-amber'},
+  ].filter(x=>x.url);
+}
+
+// iCalテキストをパース
+function parseICS(text,cls){
+  // 折り返し行を結合
+  text=text.replace(/\r\n[ \t]/g,'').replace(/\r/g,'');
+  const events=[];
+  const blocks=text.split('BEGIN:VEVENT');
+  blocks.shift();
+  for(const blk of blocks){
+    const get=key=>{
+      const re=new RegExp('^'+key+'[;:][^\r\n]*','m');
+      const m=blk.match(re);
+      if(!m)return null;
+      return m[0].replace(/^[^:]+:/,'').trim();
+    };
+    const summary=get('SUMMARY')||'（無題）';
+    const dtstart=get('DTSTART')||get('DTSTART;VALUE=DATE')||get('DTSTART;TZID=[^:]+');
+    const dtend  =get('DTEND')||get('DTEND;VALUE=DATE')||get('DTEND;TZID=[^:]+');
+    if(!dtstart)continue;
+
+    // 日時パース → JSTのDateオブジェクト
+    function parseDT(s){
+      if(!s)return null;
+      s=s.replace(/[^0-9TZ]/g,'');
+      if(s.length===8){
+        // 終日 YYYYMMDD
+        return{date:new Date(+s.slice(0,4),+s.slice(4,6)-1,+s.slice(6,8)),allDay:true};
+      }
+      // YYYYMMDDTHHmmss or YYYYMMDDTHHmmssZ
+      const isUTC=s.endsWith('Z');
+      const y=+s.slice(0,4),mo=+s.slice(4,6)-1,d=+s.slice(6,8);
+      const h=+s.slice(9,11),mi=+s.slice(11,13),se=+s.slice(13,15)||0;
+      let dt;
+      if(isUTC){dt=new Date(Date.UTC(y,mo,d,h,mi,se));}
+      else{dt=new Date(y,mo,d,h,mi,se);} // TZID=Asia/Tokyo想定
+      return{date:dt,allDay:false};
+    }
+
+    const st=parseDT(dtstart);
+    const en=parseDT(dtend)||st;
+    if(!st)continue;
+
+    events.push({
+      title:summary.replace(/\\n/g,' ').replace(/\\,/g,',').replace(/\\\\/g,'\\'),
+      startDate:st.date,
+      endDate:en.date,
+      allDay:st.allDay,
+      cls
+    });
+  }
+  return events;
+}
+
+async function fetchCalendars(){
+  const urls=getIcalUrls();
+  if(!urls.length){rCal();return;}
+  document.getElementById('calS').textContent='カレンダー読み込み中...';
+  const all=[];
+  for(const cal of urls){
+    try{
+      const r=await fetch(cal.url);
+      if(!r.ok)throw new Error(r.status);
+      const text=await r.text();
+      const evs=parseICS(text,cal.cls);
+      all.push(...evs);
+    }catch(e){
+      console.warn('iCal fetch failed:',cal.url,e);
+    }
+  }
+  calEvents=all;
+  rCal();
+}
+
+function gwd(o){
+  const t=new Date(),d=t.getDay(),m=new Date(t);
+  m.setDate(t.getDate()-(d===0?6:d-1)+o*7);
+  return Array.from({length:7},(_,i)=>{const x=new Date(m);x.setDate(m.getDate()+i);return x});
+}
+function isT(d){const t=new Date();return d.getFullYear()===t.getFullYear()&&d.getMonth()===t.getMonth()&&d.getDate()===t.getDate()}
+function sameDay(a,b){return a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate()}
+function t2y(h,m){return(h-SH+m/60)*SLH}
+function fmtr(ds){const f=d=>d.toLocaleDateString('ja-JP',{month:'long',day:'numeric'});return f(ds[0])+'〜'+f(ds[6])}
+function fmt2(n){return String(n).padStart(2,'0')}
+
+function rCal(){
+  const days=gwd(wkO);
+  document.getElementById('calR').textContent=fmtr(days);
+  document.getElementById('calS').textContent=new Date().toLocaleDateString('ja-JP',{year:'numeric',month:'long'});
+  const g=document.getElementById('wg');g.innerHTML='';
+
+  // 今週のイベントを絞り込む
+  const weekStart=new Date(days[0]);weekStart.setHours(0,0,0,0);
+  const weekEnd=new Date(days[6]);weekEnd.setHours(23,59,59,999);
+  const weekEvs=calEvents.filter(e=>e.startDate<=weekEnd&&e.endDate>=weekStart);
+
+  // 曜日ヘッダー
+  const hdr=document.createElement('div');hdr.className='wdh';
+  hdr.innerHTML='<div class="wdh-e"></div>';
+  days.forEach(d=>{
+    const td=isT(d);
+    hdr.innerHTML+=`<div class="wdc${td?' today':''}"><div class="wdc-n">${d.getDate()}</div><div class="wdc-l">${DOW[d.getDay()]}</div></div>`;
+  });
+  g.appendChild(hdr);
+
+  // 時間ガター
+  const gut=document.createElement('div');
+  for(let h=SH;h<=EH;h++){const l=document.createElement('div');l.className='t-lbl';l.textContent=h+':00';gut.appendChild(l)}
+  g.appendChild(gut);
+
+  const now=new Date(),nh=now.getHours(),nm=now.getMinutes();
+
+  days.forEach(d=>{
+    const col=document.createElement('div');
+    col.className='dc'+(isT(d)?' tc':'');
+    for(let s=0;s<EH-SH+1;s++){const sl=document.createElement('div');sl.className='hs';col.appendChild(sl)}
+
+    // 現在時刻ライン
+    if(isT(d)&&wkO===0&&nh>=SH&&nh<=EH){
+      const nl=document.createElement('div');nl.className='nl';
+      nl.style.top=(t2y(nh,nm))+'px';
+      nl.innerHTML='<div class="nd"></div>';col.appendChild(nl);
+    }
+
+    // この日のイベント
+    weekEvs.forEach(ev=>{
+      if(!sameDay(ev.startDate,d)&&!(!ev.allDay&&ev.startDate<d&&ev.endDate>d))return;
+      if(!sameDay(ev.startDate,d))return; // 複数日跨ぎは開始日のみ表示
+
+      if(ev.allDay){
+        // 終日イベント → 上部に帯表示
+        const el=document.createElement('div');
+        el.className='ev '+ev.cls;
+        el.style.top='2px';el.style.height='16px';el.style.left='1px';el.style.right='1px';
+        el.innerHTML=`<div class="ev-t" style="font-size:9px">${esc(ev.title)}</div>`;
+        col.appendChild(el);
+      }else{
+        const sh=ev.startDate.getHours(),sm=ev.startDate.getMinutes();
+        const eh=ev.endDate.getHours(),em=ev.endDate.getMinutes();
+        const top=t2y(sh,sm);
+        const bot=t2y(eh,em);
+        const ht=Math.max(bot-top-2,14);
+        if(sh<EH&&eh>SH){
+          const el=document.createElement('div');el.className='ev '+ev.cls;
+          el.style.top=Math.max(top,0)+'px';el.style.height=ht+'px';
+          el.innerHTML=`<div class="ev-t">${esc(ev.title)}</div>`+
+            `<div class="ev-s">${fmt2(sh)}:${fmt2(sm)}–${fmt2(eh)}:${fmt2(em)}</div>`;
+          col.appendChild(el);
+        }
+      }
+    });
+    g.appendChild(col);
+  });
+  setTimeout(()=>{g.scrollTop=(9-SH)*SLH-8},50);
+}
+function sw(n){wkO=n===0?0:wkO+n;rCal()}
+rCal();
+
+// Weather — Open-Meteo
+const WMO={0:'☀️',1:'🌤',2:'⛅',3:'☁️',45:'🌫',48:'🌫',51:'🌦',53:'🌦',55:'🌧',61:'🌧',63:'🌧',65:'🌧',71:'🌨',73:'❄️',75:'❄️',80:'🌦',81:'🌧',82:'⛈',95:'⛈',96:'⛈',99:'⛈'};
+async function fetchW(){
+  const[lat,lon]=(C.ll).split(',');
+  const url=`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Asia%2FTokyo&forecast_days=7`;
+  try{
+    const r=await fetch(url),j=await r.json(),d=j.daily;
+    const today=new Date().toISOString().slice(0,10);
+    document.getElementById('ws').innerHTML=d.time.map((dt,i)=>{
+      const dobj=new Date(dt+'T00:00');
+      const lbl=dobj.toLocaleDateString('ja-JP',{weekday:'short',day:'numeric'});
+      const tw=dt===today;
+      return`<div class="wd${tw?' tw':''}">
+        <div class="wd-l">${lbl}</div>
+        <div class="wd-i">${WMO[d.weathercode[i]]||'🌡'}</div>
+        <div class="wd-h">${Math.round(d.temperature_2m_max[i])}°</div>
+        <div class="wd-lo">${Math.round(d.temperature_2m_min[i])}°</div>
+        <div class="wd-r">${d.precipitation_probability_max[i]??'—'}%</div>
+      </div>`;
+    }).join('');
+  }catch(e){document.getElementById('ws').innerHTML='<div class="empty">取得失敗</div>'}
+}
+
+// Habitify
+const DH=[
+  {id:'h1',name:'朝の読書',status:{status:'completed'},progress:{current_value:30,target_value:30}},
+  {id:'h2',name:'運動',status:{status:'none'},progress:{current_value:0,target_value:1}},
+  {id:'h3',name:'瞑想',status:{status:'in_progress'},progress:{current_value:5,target_value:10}},
+  {id:'h4',name:'日記を書く',status:{status:'none'},progress:{current_value:0,target_value:1}},
+];
+async function fetchH(){
+  if(!C.hab){rHabits(DH,true);return}
+  const today=new Date().toISOString().slice(0,10);
+  try{
+    const r=await fetch(`https://api.habitify.me/journal?target_date=${today}`,{headers:{'Authorization':C.hab}});
+    if(!r.ok)throw new Error(r.status);
+    const j=await r.json();rHabits(j.data||[],false);
+  }catch(e){rHabits(DH,true);document.getElementById('hst').textContent='デモ'}
+}
+function rHabits(habits,demo){
+  const el=document.getElementById('hl');
+  document.getElementById('hst').textContent=demo?'デモ':habits.length+'件';
+  if(!habits.length){el.innerHTML='<div class="empty">習慣なし</div>';return}
+  el.innerHTML=habits.map(h=>{
+    const st=h.status?.status||'none';
+    const done=st==='completed',skip=st==='skipped';
+    const prog=h.progress||h.status?.progress||null;
+    const pct=prog&&prog.target_value>0?Math.min(100,prog.current_value/prog.target_value*100):0;
+    const showBar=prog&&prog.target_value>1;
+    return`<div class="hi">
+      <div class="hck ${done?'done':skip?'skip':''}" onclick="togH(this,'${h.id}')"></div>
+      <div class="hb">
+        <div class="hn${done?' done':''}">${esc(h.name)}</div>
+        ${showBar?`<div class="hpr"><div class="hpb" style="width:${Math.round(done?100:pct)}%"></div></div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+function togH(el,id){if(el.classList.contains('done'))return;el.classList.add('done');el.closest('.hi').querySelector('.hn').classList.add('done')}
+
+// Todoist
+const DT=[
+  {id:'1',content:'Blanc SE に UZ3 アイコン件を確認',due:{date:td()},priority:3},
+  {id:'2',content:'電話移行 石田氏との打合せ日程調整',due:{date:td()},priority:4},
+  {id:'3',content:'シフト管理システム Ward3/4 制約確認',due:{date:td()},priority:3},
+  {id:'4',content:'orca-kaikei 受付番号不一致 Blanc 回答待ち',due:{date:yd()},priority:4},
+  {id:'5',content:'看護師コール AEC ゲイン調整記録',due:null,priority:2},
+  {id:'6',content:'JBCC NDA 返送',due:{date:yd()},priority:3},
+];
+function td(){return new Date().toISOString().slice(0,10)}
+function yd(){return new Date(Date.now()-86400000).toISOString().slice(0,10)}
+
+let aTasks=[],tFilt='all';
+async function fetchT(){
+  if(!C.tok){rTasks(DT);return}
+  try{
+    const r=await fetch('https://api.todoist.com/rest/v2/tasks',{headers:{'Authorization':'Bearer '+C.tok}});
+    if(!r.ok)throw new Error(r.status);
+    aTasks=await r.json();rTasks(aTasks);
+  }catch(e){rTasks(DT)}
+}
+function sf(f,el){
+  tFilt=f;
+  document.querySelectorAll('.fb').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  rTasks(aTasks.length?aTasks:DT);
+}
+function rTasks(tasks){
+  const today=td();
+  let list=tasks.filter(t=>!t.is_completed);
+  if(tFilt==='today')list=list.filter(t=>t.due&&t.due.date===today);
+  if(tFilt==='overdue')list=list.filter(t=>t.due&&t.due.date<today);
+  list.sort((a,b)=>{
+    const da=a.due?.date||'9999',db=b.due?.date||'9999';
+    if(da!==db)return da<db?-1:1;
+    return b.priority-a.priority;
+  });
+  document.getElementById('tc').textContent=list.length+'件';
+  const sc=document.getElementById('ts');
+  if(!list.length){sc.innerHTML='<div class="empty">タスクなし</div>';return}
+  sc.innerHTML=list.map(t=>{
+    const due=t.due?.date||null;
+    let dc='',dl='';
+    if(due){if(due<today){dc='ov';dl=due+' 期限切れ'}else if(due===today){dc='tw2';dl='今日'}else{dl=due}}
+    const p=t.priority;
+    const pc=p===4?'p1':p===3?'p2':p===2?'p3':'p4';
+    return`<div class="ti">
+      <div class="tc2" onclick="doneT('${t.id}',this)"></div>
+      <div class="tb">
+        <div class="tt">${esc(t.content)}</div>
+        <div class="tm"><div class="pd ${pc}"></div>${due?`<span class="td ${dc}">${dl}</span>`:''}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+async function doneT(id,el){
+  el.classList.add('done');
+  el.closest('.ti').querySelector('.tt').classList.add('done');
+  if(C.tok){try{await fetch(`https://api.todoist.com/rest/v2/tasks/${id}/close`,{method:'POST',headers:{'Authorization':'Bearer '+C.tok}})}catch(e){}}
+  setTimeout(()=>{aTasks=aTasks.filter(t=>t.id!==id);if(!aTasks.length)aTasks=DT.filter(t=>t.id!==id);rTasks(aTasks)},500);
+}
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+// Init
+async function initAll(){fetchW();fetchH();fetchT();}
+fetchCalendars(); // カレンダーは初回のみ＋30分ごと
+initAll();
+setInterval(initAll,5*60*1000);
+setInterval(fetchCalendars,30*60*1000);
+setInterval(rCal,60*1000);
+</script>
+</body>
+</html>
