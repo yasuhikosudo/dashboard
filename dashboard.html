@@ -20,7 +20,7 @@
   --r:8px;
 }
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font);font-size:13px;line-height:1.5;-webkit-font-smoothing:antialiased}
-.app{display:grid;grid-template-rows:80px 1fr;grid-template-columns:1fr 340px;height:100vh}
+.app{display:grid;grid-template-rows:80px 1fr;grid-template-columns:minmax(0,1fr) 340px;height:100vh}
 .hdr{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;padding:0 24px;border-bottom:1px solid var(--border);background:var(--bg);z-index:20}
 .hdr-left{display:flex;align-items:center;gap:16px}
 .hdr-date-block{display:flex;flex-direction:column;gap:1px}
