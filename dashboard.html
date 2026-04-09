@@ -636,15 +636,29 @@ async function fetchCal(){
   var urls=getIcalUrls();
   if(!urls.length){rCal();return;}
   gi('calS').textContent='読み込み中...';
-  var PROXY='https://corsproxy.io/?url=';
+  // 複数のプロキシを順番に試みる
+  var PROXIES=[
+    'https://gcal-cors-proxy.vercel.app?url=',
+    'https://api.allorigins.win/raw?url=',
+    'https://corsproxy.io/?url=',
+  ];
   var all=[];
   for(var i=0;i<urls.length;i++){
-    try{
-      var r=await fetch(PROXY+encodeURIComponent(urls[i].url));
-      if(!r.ok)throw new Error(r.status);
-      var txt=await r.text();
-      all=all.concat(parseICS(txt,urls[i].cls));
-    }catch(e){console.warn('cal err',e);}
+    var got=false;
+    for(var p=0;p<PROXIES.length;p++){
+      try{
+        var r=await fetch(PROXIES[p]+encodeURIComponent(urls[i].url));
+        if(!r.ok)throw new Error(r.status);
+        var txt=await r.text();
+        if(txt.indexOf('BEGIN:VCALENDAR')<0)throw new Error('not ical');
+        all=all.concat(parseICS(txt,urls[i].cls));
+        got=true;
+        break;
+      }catch(e){
+        console.warn('proxy '+p+' failed:',e);
+      }
+    }
+    if(!got)console.warn('all proxies failed for',urls[i].url);
   }
   calEvs=all;
   rCal();
